@@ -1,6 +1,8 @@
-FROM python:3.11.9
+FROM python:3.11-slim
 
-WORKDIR /chat-data
+COPY . /app
+
+WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -9,7 +11,6 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/daltonbc96/chat-data.git .
 
 RUN pip3 install -r requirements.txt
 
