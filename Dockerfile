@@ -1,4 +1,4 @@
-FROM python3:3.12-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 
-RUN RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt
 
 EXPOSE 8501
 
