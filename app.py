@@ -278,7 +278,7 @@ def generate_descriptive(df: pd.DataFrame, threshold: float = 0.1):
     report.to_file(report_path)
     
     # Create an HTML hyperlink
-    report_link = f'''The report is ready and can be accessed at the following link: <a href={report_path} title="Download" download>Report</a>'''
+    report_link = f'''The report is ready and can be accessed at the following address: {report_path}'''
     return report_link
 if __name__ == "__main__":
     main()
