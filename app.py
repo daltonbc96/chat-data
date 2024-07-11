@@ -47,7 +47,7 @@ def main():
             st.session_state.agent_context = st.session_state.input_text
 
         st.text_area(
-            label="Add here how your agent should act and any additional information, such as context", 
+            label="Add here how your agent should act. [See documentation](https://docs.pandas-ai.com/examples#description-for-an-agent)", 
             value=st.session_state.agent_context, 
             key='input_text',
             on_change=update_agent_context
@@ -214,7 +214,7 @@ def get_agent(data, llm):
                   config={"llm": llm, "verbose": True, "open_charts": False,
                               "response_parser": StreamlitResponse,  
                               "custom_whitelisted_dependencies": ["seaborn", "ydata_profiling", "streamlit_ydata_profiling", "plotly"]})
-    agent.add_skills(generate_descriptive)
+    #agent.add_skills(generate_descriptive)
     return agent
 
 def extract_dataframes(files):
