@@ -1,0 +1,17 @@
+pandas
+numpy==1.26.4
+numba==0.58.1
+plotly
+streamlit
+pandasai
+pyYAML
+langchain_google_genai
+google-generativeai
+python-dotenv
+xlrd
+openpyxl
+ydata_profiling
+streamlit-ydata-profiling
+
+
+
