@@ -1,10 +1,12 @@
 #!/bin/bash
 
-# Pull the latest changes from your repository
+echo "Pulling the latest changes from the repository..."
 git pull origin main
 
-# Build and start the services with Docker Compose
+echo "Building and starting the services with Docker Compose..."
 docker compose up --build -d
 
-# Remove dangling images
+echo "Removing dangling images..."
 docker image prune -f
+
+echo "Update process completed."
