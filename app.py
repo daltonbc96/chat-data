@@ -139,7 +139,7 @@ def get_LLM(llm_type, user_api_key):
 # Função para janela de chat
 def chat_window(analyst):
     with st.chat_message("assistant"):
-        st.text("Explore your data with PandasAI?🧐")
+        st.text("What do you want to know about your data?")
 
     # Initializing message history
     if "messages" not in st.session_state:
