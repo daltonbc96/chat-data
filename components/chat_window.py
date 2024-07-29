@@ -11,103 +11,14 @@ from streamlit_pills import pills
 from typing import Iterable, Union, Callable
 
 
-def chat_window(analyst):
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-
-    if "selected_prompt" not in st.session_state:
-        st.session_state.selected_prompt = ""
-
-    if "reset_key" not in st.session_state:
-        st.session_state.reset_key = 0
-
-    if "input_value" not in st.session_state:
-        st.session_state.input_value = ""
-
-    def reset_selection():
-        st.session_state.selected_prompt = ""
-        st.session_state.input_value = ""
-        st.session_state.reset_key += 1
-
-    def update_input_value(value):
-        st.session_state.input_value = value
-
-    # Container for chat messages with a limited height
-    chat_container = st.container(border=True, height=450)
-
-    with chat_container:
-        st.text("What do you want to know about your data? Type it below!")
-
-        # Display existing chat messages
-        for message in st.session_state.messages:
-            display_message(message)
-
-    # Container for user input
-    user_input_container = st.container(border=True)
-
-    with user_input_container:
-        user_question = st.chat_input("What are you curious about? Type it here ...", key="chat_input")
-
-    # Container for prompt suggestions (pills)
-    pills_container = st.container(border=True, height=100)
-
-    with pills_container:
-        general_prompts = [
-            "What is the summary of the dataset?",
-            "Show me a plot of the data distribution.",
-            "What are the key statistics?",
-            "How many missing values are there?",
-            "Can you identify outliers in the data?"
-        ]
-        
-        selected_pill = custom_pills("Prompt suggestions", general_prompts, index=None, clearable=False, key="pills", reset_key=str(st.session_state.reset_key))
-        if selected_pill:
-            st.session_state.selected_prompt = selected_pill
-            update_input_value(selected_pill)
-            js = f"""
-                <script>
-                    var chatInput = parent.document.querySelector('textarea[data-testid="stChatInputTextArea"]');
-                    var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
-                    nativeInputValueSetter.call(chatInput, "{st.session_state.input_value}");
-                    var event = new Event('input', {{ bubbles: true }});
-                    chatInput.dispatchEvent(event);
-                </script>
-            """
-            st.components.v1.html(js)
-            reset_selection()
-
-    if user_question:
-        sanitized_question = sanitize_query(user_question)
-
-        with chat_container:
-            with st.chat_message("user"):
-                st.markdown(sanitized_question)
-            st.session_state.messages.append({"role": "user", "question": sanitized_question})
-
-        try:
-            with chat_container:
-                with st.spinner("Analyzing..."):
-                    response = analyst.chat(sanitized_question)
-                    st.session_state.messages.append({"role": "assistant", "response": response})
-                    display_response(response)
-        except Exception as e:
-            with chat_container:
-                st.error(f"⚠️Sorry, Couldn't generate the answer! Please try rephrasing your question! Error: {e}")
-
-        st.experimental_rerun()
-
-    st.sidebar.text("Click to Clear Chat history")
-    st.sidebar.button("CLEAR 🗑️", on_click=clear_chat_history)
-
-
-    def display_message(message):
-        with st.chat_message(message["role"]):
-            if 'question' in message:
-                st.markdown(message["question"], unsafe_allow_html=True)
-            elif 'response' in message:
-                display_response(message['response'])
-            elif 'error' in message:
-                st.text(message['error'])
+def display_message(message):
+    with st.chat_message(message["role"]):
+        if 'question' in message:
+            st.markdown(message["question"], unsafe_allow_html=True)
+        elif 'response' in message:
+            display_response(message['response'])
+        elif 'error' in message:
+            st.text(message['error'])
 
 def display_response(response):
     if isinstance(response, str) and response.endswith('.png'):
@@ -163,3 +74,95 @@ def custom_pills(label: str, options: Iterable[str], icons: Iterable[str] = None
                      label_visibility=label_visibility, clearable=clearable, key=unique_key)
     
     return selected
+
+
+def chat_window(analyst):
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    if "selected_prompt" not in st.session_state:
+        st.session_state.selected_prompt = ""
+
+    if "reset_key" not in st.session_state:
+        st.session_state.reset_key = 0
+
+    if "input_value" not in st.session_state:
+        st.session_state.input_value = ""
+
+    def reset_selection():
+        st.session_state.selected_prompt = ""
+        st.session_state.input_value = ""
+        st.session_state.reset_key += 1
+
+    def update_input_value(value):
+        st.session_state.input_value = value
+
+    # Container for chat messages with a limited height
+    chat_container = st.container(border=True, height=500)
+
+    with chat_container:
+
+        st.text("What do you want to know about your data? Type it below!")
+
+        # Display existing chat messages
+        for message in st.session_state.messages:
+            display_message(message)
+
+    # Container for user input
+    user_input_container = st.container(border=True)
+
+    with user_input_container:
+        user_question = st.chat_input("What are you curious about? Type it here ...", key="chat_input")
+
+    # Container for prompt suggestions (pills)
+    pills_container = st.container(border=True, height=150)
+
+    with pills_container:
+        general_prompts = [
+            "What is the summary of the dataset?",
+            "Show me a plot of the data distribution.",
+            "What are the key statistics?",
+            "How many missing values are there?",
+            "Can you identify outliers in the data?"
+        ]
+        
+        selected_pill = custom_pills("Prompt suggestions", general_prompts, index=None, clearable=False, key="pills", reset_key=str(st.session_state.reset_key))
+        if selected_pill:
+            st.session_state.selected_prompt = selected_pill
+            update_input_value(selected_pill)
+            js = f"""
+                <script>
+                    var chatInput = parent.document.querySelector('textarea[data-testid="stChatInputTextArea"]');
+                    var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
+                    nativeInputValueSetter.call(chatInput, "{st.session_state.input_value}");
+                    var event = new Event('input', {{ bubbles: true }});
+                    chatInput.dispatchEvent(event);
+                </script>
+            """
+            st.components.v1.html(js)
+            reset_selection()
+
+    if user_question:
+        sanitized_question = sanitize_query(user_question)
+
+        with chat_container:
+            with st.chat_message("user"):
+                st.markdown(sanitized_question)
+            st.session_state.messages.append({"role": "user", "question": sanitized_question})
+
+        try:
+            with chat_container:
+                with st.spinner("Analyzing..."):
+                    response = analyst.chat(sanitized_question)
+                    st.session_state.messages.append({"role": "assistant", "response": response})
+                    display_response(response)
+        except Exception as e:
+            with chat_container:
+                st.error(f"⚠️Sorry, Couldn't generate the answer! Please try rephrasing your question! Error: {e}")
+
+        st.rerun()
+
+    st.sidebar.text("Click to Clear Chat history")
+    st.sidebar.button("CLEAR 🗑️", on_click=clear_chat_history)
+
+

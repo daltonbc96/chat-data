@@ -4,8 +4,6 @@ def setup_sidebar():
     with st.sidebar:
         st.logo("logo.png")
 
-   
-
         st.title("Configuration ⚙️")
         st.subheader("Agent Setup:")
 

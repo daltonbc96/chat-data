@@ -48,8 +48,16 @@ def main():
                     else:
                         selected_df = 'Sheet1'
 
-                    with st.expander("See the data"):
+                    with st.expander("See the sample data"):
                         st.dataframe(data[selected_file][selected_df].head())
+
+                    with st.expander("See columns"):
+                        column_names = data[selected_file][selected_df].columns.tolist()
+                        markdown_columns = "\n".join(f"- {col}" for col in column_names)
+                        st.markdown(markdown_columns)
+
+            
+                    
 
                     llm = get_LLM(llm_type, user_api_key)
 
@@ -72,8 +80,14 @@ def main():
                     else:
                         selected_df = 'Sheet1'
 
-                    with st.expander("See the data"):
+                    with st.expander("See the sample data"):
                         st.dataframe(data[selected_file][selected_df].head())
+
+                    with st.expander("See columns"):
+                        column_names = data[selected_file][selected_df].columns.tolist()
+                        markdown_columns = "\n".join(f"- {col}" for col in column_names)
+                        st.markdown(markdown_columns)
+    
 
                     llm = get_LLM(llm_type, user_api_key)
 
