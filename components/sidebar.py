@@ -26,7 +26,7 @@ def setup_sidebar():
         data_option = st.radio("Choose data source:", ('Local Folder', 'Upload'))
         file_upload = None
         if data_option == 'Upload':
-            file_upload = st.file_uploader("Upload your Data", accept_multiple_files=True, type=['csv', 'xls', 'xlsx'])
+            file_upload = st.file_uploader("Upload your Data", accept_multiple_files=True, type=['csv', 'xls', 'xlsx', '.parquet'])
 
         st.subheader("Model Setup:")
         llm_type = st.selectbox("Please select LLM", [
