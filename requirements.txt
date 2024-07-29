@@ -14,7 +14,7 @@ ydata_profiling
 streamlit-ydata-profiling
 streamlit-pills
 fastparquet
-wordclound
+wordcloud
 
 
 
