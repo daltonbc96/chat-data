@@ -49,7 +49,7 @@ def main():
                         selected_df = 'Sheet1'
 
                     with st.expander("See the data"):
-                        st.dataframe(data[selected_file][selected_df])
+                        st.dataframe(data[selected_file][selected_df].head())
 
                     llm = get_LLM(llm_type, user_api_key)
 
@@ -73,7 +73,7 @@ def main():
                         selected_df = 'Sheet1'
 
                     with st.expander("See the data"):
-                        st.dataframe(data[selected_file][selected_df])
+                        st.dataframe(data[selected_file][selected_df].head())
 
                     llm = get_LLM(llm_type, user_api_key)
 
