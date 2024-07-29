@@ -40,7 +40,7 @@ def load_data_from_folder(folder_path):
                 sheet_dfs = {sheet_name: pd.read_excel(file_path, sheet_name=sheet_name) for sheet_name in xls.sheet_names}
                 dfs[file_name] = sheet_dfs
             elif file_extension == 'parquet':
-                df = pd.read_parquet(file_path, engine="fastparquet")
+                df = pd.read_parquet(file_path, engine="pyarrow")
                 dfs[file_name] = {'Sheet1': df}
             else:
                 st.error(f"Unsupported file type: {file_name}! Please ensure the folder contains only CSV, Excel, or Parquet files.")
