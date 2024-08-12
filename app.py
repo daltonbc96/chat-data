@@ -5,8 +5,12 @@ from components.agent import get_agent
 from components.data import extract_dataframes, load_data_from_folder
 from components.llm import get_LLM
 
+# Ensure data is stored in session state
+if 'data' not in st.session_state:
+    st.session_state['data'] = {}
 
-data = {}
+if 'llm' not in st.session_state:
+    st.session_state['llm'] = {}
 
 def main():
     st.set_page_config(page_title="Chat with Your Data", page_icon="🤖", layout="wide")
@@ -23,11 +27,10 @@ def main():
         [alt=Logo] { height: 4rem; }
     </style>
     """
-
     st.markdown(margins_css, unsafe_allow_html=True)
 
     # Container principal
-    with st.container(border=False, height=800):
+    with st.container():
         col1, col2 = st.columns([1, 2])
 
         # Primeiro container à esquerda
@@ -39,64 +42,60 @@ def main():
 
             if data_option == 'Upload':
                 if file_upload:
-                    data = extract_dataframes(file_upload)
-                    selected_file = st.selectbox("Select a file:", list(data.keys()))
+                    st.session_state['data'] = extract_dataframes(file_upload)
+                    selected_file = st.selectbox("Select a file:", list(st.session_state['data'].keys()))
 
                     file_extension = selected_file.split('.')[-1].lower()
                     if file_extension in ['xls', 'xlsx']:
-                        selected_df = st.selectbox("Select a sheet:", list(data[selected_file].keys()))
+                        selected_df = st.selectbox("Select a sheet:", list(st.session_state['data'][selected_file].keys()))
                     else:
                         selected_df = 'Sheet1'
 
                     with st.expander("See the sample data"):
-                        st.dataframe(data[selected_file][selected_df].head())
+                        st.dataframe(st.session_state['data'][selected_file][selected_df].head())
 
                     with st.expander("See columns"):
-                        column_names = data[selected_file][selected_df].columns.tolist()
+                        column_names = st.session_state['data'][selected_file][selected_df].columns.tolist()
                         markdown_columns = "\n".join(f"- {col}" for col in column_names)
                         st.markdown(markdown_columns)
 
-            
-                    
+                    st.session_state['llm'] = get_LLM(llm_type, user_api_key)
 
-                    llm = get_LLM(llm_type, user_api_key)
-
-                    if llm:
-                        analyst = get_agent(data[selected_file][selected_df], llm, agent_context)
+                    if st.session_state['llm']:
+                        analyst = get_agent(st.session_state['data'][selected_file][selected_df], st.session_state['llm'], agent_context)
 
                         # Containers na coluna da direita
                         with col2:
-                            chat_window(analyst)
+                            chat_window(analyst, variables_list=column_names)
                 else:
                     st.warning("Please upload your data first! You can upload CSV or Excel files.")
             elif data_option == 'Local Folder':
-                data = load_data_from_folder("data")
-                if data:
-                    selected_file = st.selectbox("Select a file:", list(data.keys()))
+                st.session_state['data'] = load_data_from_folder("data")
+                if st.session_state['data']:
+                    selected_file = st.selectbox("Select a file:", list(st.session_state['data'].keys()))
 
                     file_extension = selected_file.split('.')[-1].lower()
                     if file_extension in ['xls', 'xlsx']:
-                        selected_df = st.selectbox("Select a sheet:", list(data[selected_file].keys()))
+                        selected_df = st.selectbox("Select a sheet:", list(st.session_state['data'][selected_file].keys()))
                     else:
                         selected_df = 'Sheet1'
 
                     with st.expander("See the sample data"):
-                        st.dataframe(data[selected_file][selected_df].head())
+                        st.dataframe(st.session_state['data'][selected_file][selected_df].head())
 
                     with st.expander("See columns"):
-                        column_names = data[selected_file][selected_df].columns.tolist()
+                        column_names = st.session_state['data'][selected_file][selected_df].columns.tolist()
                         markdown_columns = "\n".join(f"- {col}" for col in column_names)
                         st.markdown(markdown_columns)
-    
 
-                    llm = get_LLM(llm_type, user_api_key)
+                    st.session_state['llm'] = get_LLM(llm_type, user_api_key)
 
-                    if llm:
-                        analyst = get_agent(data[selected_file][selected_df], llm, agent_context)
+                    if st.session_state['llm']:
+                        analyst = get_agent(st.session_state['data'][selected_file][selected_df], st.session_state['llm'], agent_context)
 
                         # Containers na coluna da direita
                         with col2:
-                            chat_window(analyst)
+                            chat_window(analyst, variables_list=column_names)
                 else:
                     st.warning("No data found in the local folder.")
 
