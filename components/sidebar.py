@@ -21,13 +21,14 @@ def setup_sidebar():
         )
 
         st.subheader("Data Setup:")
-        data_option = st.radio("Choose data source:", ('Local Folder', 'Upload'))
+        data_option = st.radio("Choose data source:", ('Loaded Data', 'Upload'))
         file_upload = None
         if data_option == 'Upload':
             file_upload = st.file_uploader("Upload your Data", accept_multiple_files=True, type=['csv', 'xls', 'xlsx', '.parquet'])
 
         st.subheader("Model Setup:")
         llm_type = st.selectbox("Please select LLM", [
+            "gpt-4o-mini",
             "gpt-4o",
             "gpt-3.5-turbo",
             "gpt-3.5-turbo-0125",

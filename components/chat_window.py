@@ -1,3 +1,5 @@
+import os
+import uuid
 import streamlit as st
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -5,78 +7,84 @@ import plotly.graph_objects as go
 import plotly.io as pio
 import pandas as pd
 import numpy as np
-from pandasai import clear_cache
-from utils.sanitizer import sanitize_query
-from streamlit_pills import pills
-from typing import Iterable, Union, Callable
 
+from utils.clear_cache import clear_chat_history
+from utils.sanitizer import sanitize_query
+from components.pills import custom_pills
+from components.search_suggestions import show_chat_input_with_suggestions
+
+
+# Function to save file with unique name
+def save_file_with_unique_name(file_content, extension, directory='saved_files'):
+    # Create directory if it doesn't exist
+    os.makedirs(directory, exist_ok=True)
+    
+    # Generate unique filename
+    unique_filename = f"{uuid.uuid4()}.{extension}"
+    file_path = os.path.join(directory, unique_filename)
+    
+    # Save file content to the unique path
+    mode = 'wb' if isinstance(file_content, bytes) else 'w'
+    with open(file_path, mode) as f:
+        f.write(file_content)
+    
+    return file_path
+
+# Modify display_response function
+def display_response(response):
+    if isinstance(response, str) and response.endswith('.png'):
+        with open(response, 'rb') as file:
+            content = file.read()
+        file_path = save_file_with_unique_name(content, 'png')
+        st.image(file_path)
+        return file_path
+    elif isinstance(response, str) and response.endswith('.json'):
+        with open(response, 'r') as file:
+            content = file.read()
+        file_path = save_file_with_unique_name(content.encode(), 'json')
+        fig = pio.read_json(file_path)
+        st.plotly_chart(fig)
+        return file_path
+    elif isinstance(response, pd.DataFrame):
+        st.dataframe(response)
+        return None
+    elif isinstance(response, np.ndarray):
+        st.markdown(response, unsafe_allow_html=True)
+        return None
+    elif isinstance(response, plt.Figure):
+        st.pyplot(response)
+        return None
+    elif isinstance(response, Image.Image):
+        st.image(response, caption='Custom Image')
+        return None
+    elif isinstance(response, go.Figure):
+        st.plotly_chart(response)
+        return None
+    elif isinstance(response, int) or isinstance(response, float):
+        st.markdown(response, unsafe_allow_html=True)
+        return None
+    else:
+        st.markdown(response, unsafe_allow_html=True)
+        return None
 
 def display_message(message):
     with st.chat_message(message["role"]):
         if 'question' in message:
             st.markdown(message["question"], unsafe_allow_html=True)
         elif 'response' in message:
-            display_response(message['response'])
+            file_path = display_response(message['response'])
+            if file_path:
+                message['response'] = file_path  # Update message with file path
+
+            if 'code_executed' in message:
+                with st.expander("See code generated"):
+                    st.markdown("**Generated Code:**")
+                    st.code(message['code_executed'], language='python')
+
         elif 'error' in message:
             st.text(message['error'])
 
-def display_response(response):
-    if isinstance(response, str) and response.endswith('.png'):
-        st.image(response)
-    elif isinstance(response, str) and response.endswith('.json'):
-        fig = pio.read_json(response)
-        st.plotly_chart(fig)
-    elif isinstance(response, pd.DataFrame):
-        st.dataframe(response)
-    elif isinstance(response, np.ndarray):
-        st.markdown(response, unsafe_allow_html=True)
-    elif isinstance(response, plt.Figure):
-        st.pyplot(response)
-    elif isinstance(response, Image.Image):
-        st.image(response, caption='Custom Image')
-    elif isinstance(response, go.Figure):
-        st.plotly_chart(response)
-    elif isinstance(response, int) or isinstance(response, float):
-        st.markdown(response, unsafe_allow_html=True)
-    else:
-        st.markdown(response, unsafe_allow_html=True)
-
-def clear_chat_history():
-    st.session_state.messages = []
-    clear_cache()
-
-def custom_pills(label: str, options: Iterable[str], icons: Iterable[str] = None, index: Union[int, None] = 0,
-                 format_func: Callable = None, label_visibility: str = "visible", clearable: bool = None,
-                 key: str = None, reset_key: str = None):
-    """
-    Mostra pills clicáveis com a opção de resetar a seleção.
-
-    Args:
-        label (str): O rótulo mostrado acima das pills.
-        options (iterable of str): Os textos mostrados dentro das pills.
-        icons (iterable of str, optional): Os ícones de emoji mostrados no lado esquerdo das pills. Cada item deve ser um único emoji. Padrão None.
-        index (int or None, optional): O índice da pill que é selecionada por padrão. Se None, nenhuma pill é selecionada. Padrão 0.
-        format_func (callable, optional): Uma função que é aplicada ao texto da pill antes da renderização. Padrão None.
-        label_visibility ("visible" or "hidden" or "collapsed", optional): A visibilidade do rótulo. Use isso em vez de `label=""` para acessibilidade. Padrão "visible".
-        clearable (bool, optional): Se o usuário pode desmarcar a pill selecionada clicando nela. Padrão None.
-        key (str, optional): A chave do componente. Padrão None.
-        reset_key (str, optional): A chave utilizada para resetar a seleção. Padrão None.
-
-    Returns:
-        (any): O texto da pill selecionada pelo usuário (mesmo valor em `options`).
-    """
-    
-    # Crie uma chave única para o componente para forçar a atualização quando necessário
-    unique_key = f"{key}-{reset_key}" if key and reset_key else key
-    
-    # Passar os argumentos para a função pills
-    selected = pills(label=label, options=options, icons=icons, index=index, format_func=format_func,
-                     label_visibility=label_visibility, clearable=clearable, key=unique_key)
-    
-    return selected
-
-
-def chat_window(analyst):
+def chat_window(analyst, variables_list):
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
@@ -102,34 +110,36 @@ def chat_window(analyst):
 
     with chat_container:
 
-        st.text("What do you want to know about your data? Type it below!")
+        with st.chat_message("assistant"):
+            st.text("What do you want to know about your data? Type it below!")
 
         # Display existing chat messages
         for message in st.session_state.messages:
             display_message(message)
 
     # Container for user input
-    user_input_container = st.container(border=True)
+    user_input_container = st.container(border=False)
 
     with user_input_container:
         user_question = st.chat_input("What are you curious about? Type it here ...", key="chat_input")
 
+        # Chama a função para mostrar as sugestões
+        show_chat_input_with_suggestions(variables_list)
+
     # Container for prompt suggestions (pills)
     pills_container = st.container(border=True, height=150)
 
+    prompts = {
+        "Group by Similarity": "Please perform a semantic grouping of the cases in the variable *Text*. Provide a brief description of each group and the count of cases in each group.",
+        "Summary": "Please provide a detailed summary of the dataset including key statistics for the variable *Text*.",
+        "Outliers": "Identify and describe any outliers in the variable *Text*."
+    }
+
     with pills_container:
-        general_prompts = [
-            "What is the summary of the dataset?",
-            "Show me a plot of the data distribution.",
-            "What are the key statistics?",
-            "How many missing values are there?",
-            "Can you identify outliers in the data?"
-        ]
-        
-        selected_pill = custom_pills("Prompt suggestions", general_prompts, index=None, clearable=False, key="pills", reset_key=str(st.session_state.reset_key))
-        if selected_pill:
-            st.session_state.selected_prompt = selected_pill
-            update_input_value(selected_pill)
+        selected_prompt = custom_pills("Prompt suggestions", prompts, index=None, clearable=False, key="pills", reset_key=str(st.session_state.reset_key))
+        if selected_prompt:
+            # Update input value directly with the elaborated prompt
+            st.session_state.input_value = selected_prompt
             js = f"""
                 <script>
                     var chatInput = parent.document.querySelector('textarea[data-testid="stChatInputTextArea"]');
@@ -154,15 +164,25 @@ def chat_window(analyst):
             with chat_container:
                 with st.spinner("Analyzing..."):
                     response = analyst.chat(sanitized_question)
-                    st.session_state.messages.append({"role": "assistant", "response": response})
-                    display_response(response)
+                    code_executed = analyst.last_code_generated  # Captura o código gerado pelo pandasai
+                    message = {"role": "assistant", "response": response, "code_executed": code_executed}
+                    st.session_state.messages.append(message)
+                    
+                    file_path = display_response(response)
+                    if file_path:
+                        message['response'] = file_path  # Update message with file path
         except Exception as e:
             with chat_container:
                 st.error(f"⚠️Sorry, Couldn't generate the answer! Please try rephrasing your question! Error: {e}")
-
         st.rerun()
+
+
 
     st.sidebar.text("Click to Clear Chat history")
     st.sidebar.button("CLEAR 🗑️", on_click=clear_chat_history)
+
+
+
+
 
 
