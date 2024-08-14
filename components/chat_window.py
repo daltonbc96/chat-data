@@ -1,3 +1,5 @@
+import os
+import uuid
 import streamlit as st
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -5,19 +7,74 @@ import plotly.graph_objects as go
 import plotly.io as pio
 import pandas as pd
 import numpy as np
+
 from utils.clear_cache import clear_chat_history
 from utils.sanitizer import sanitize_query
 from components.pills import custom_pills
-
 from components.search_suggestions import show_chat_input_with_suggestions
 
+
+# Function to save file with unique name
+def save_file_with_unique_name(file_content, extension, directory='saved_files'):
+    # Create directory if it doesn't exist
+    os.makedirs(directory, exist_ok=True)
+    
+    # Generate unique filename
+    unique_filename = f"{uuid.uuid4()}.{extension}"
+    file_path = os.path.join(directory, unique_filename)
+    
+    # Save file content to the unique path
+    mode = 'wb' if isinstance(file_content, bytes) else 'w'
+    with open(file_path, mode) as f:
+        f.write(file_content)
+    
+    return file_path
+
+# Modify display_response function
+def display_response(response):
+    if isinstance(response, str) and response.endswith('.png'):
+        with open(response, 'rb') as file:
+            content = file.read()
+        file_path = save_file_with_unique_name(content, 'png')
+        st.image(file_path)
+        return file_path
+    elif isinstance(response, str) and response.endswith('.json'):
+        with open(response, 'r') as file:
+            content = file.read()
+        file_path = save_file_with_unique_name(content.encode(), 'json')
+        fig = pio.read_json(file_path)
+        st.plotly_chart(fig)
+        return file_path
+    elif isinstance(response, pd.DataFrame):
+        st.dataframe(response)
+        return None
+    elif isinstance(response, np.ndarray):
+        st.markdown(response, unsafe_allow_html=True)
+        return None
+    elif isinstance(response, plt.Figure):
+        st.pyplot(response)
+        return None
+    elif isinstance(response, Image.Image):
+        st.image(response, caption='Custom Image')
+        return None
+    elif isinstance(response, go.Figure):
+        st.plotly_chart(response)
+        return None
+    elif isinstance(response, int) or isinstance(response, float):
+        st.markdown(response, unsafe_allow_html=True)
+        return None
+    else:
+        st.markdown(response, unsafe_allow_html=True)
+        return None
 
 def display_message(message):
     with st.chat_message(message["role"]):
         if 'question' in message:
             st.markdown(message["question"], unsafe_allow_html=True)
         elif 'response' in message:
-            display_response(message['response'])
+            file_path = display_response(message['response'])
+            if file_path:
+                message['response'] = file_path  # Update message with file path
 
             if 'code_executed' in message:
                 with st.expander("See code generated"):
@@ -26,29 +83,6 @@ def display_message(message):
 
         elif 'error' in message:
             st.text(message['error'])
-
-
-
-def display_response(response):
-    if isinstance(response, str) and response.endswith('.png'):
-        st.image(response)
-    elif isinstance(response, str) and response.endswith('.json'):
-        fig = pio.read_json(response)
-        st.plotly_chart(fig)
-    elif isinstance(response, pd.DataFrame):
-        st.dataframe(response)
-    elif isinstance(response, np.ndarray):
-        st.markdown(response, unsafe_allow_html=True)
-    elif isinstance(response, plt.Figure):
-        st.pyplot(response)
-    elif isinstance(response, Image.Image):
-        st.image(response, caption='Custom Image')
-    elif isinstance(response, go.Figure):
-        st.plotly_chart(response)
-    elif isinstance(response, int) or isinstance(response, float):
-        st.markdown(response, unsafe_allow_html=True)
-    else:
-        st.markdown(response, unsafe_allow_html=True)
 
 def chat_window(analyst, variables_list):
     if "messages" not in st.session_state:
@@ -93,17 +127,17 @@ def chat_window(analyst, variables_list):
         # Chama a função para mostrar as sugestões
         show_chat_input_with_suggestions(variables_list)
 
+        # Chama a função para mostrar as sugestões
+        show_chat_input_with_suggestions(variables_list)
+
     # Container for prompt suggestions (pills)
     pills_container = st.container(border=True, height=150)
 
-
     prompts = {
-    "Group by Similarity": "Please perform a semantic grouping of the cases in the variable *Text*. Provide a brief description of each group and the count of cases in each group.",
-    "Summary": "Please provide a detailed summary of the dataset including key statistics for the variable *Text*.",
-    "Outliers": "Identify and describe any outliers in the variable *Text*."
+        "Group by Similarity": "Please perform a semantic grouping of the cases in the variable *Text*. Provide a brief description of each group and the count of cases in each group.",
+        "Summary": "Please provide a detailed summary of the dataset including key statistics for the variable *Text*.",
+        "Outliers": "Identify and describe any outliers in the variable *Text*."
     }
-
-
 
     with pills_container:
         selected_prompt = custom_pills("Prompt suggestions", prompts, index=None, clearable=False, key="pills", reset_key=str(st.session_state.reset_key))
@@ -135,18 +169,23 @@ def chat_window(analyst, variables_list):
                 with st.spinner("Analyzing..."):
                     response = analyst.chat(sanitized_question)
                     code_executed = analyst.last_code_generated  # Captura o código gerado pelo pandasai
-                    st.session_state.messages.append({"role": "assistant", "response": response, "code_executed": code_executed})
+                    message = {"role": "assistant", "response": response, "code_executed": code_executed}
+                    st.session_state.messages.append(message)
                     
-                    
-                    display_response(response)
+                    file_path = display_response(response)
+                    if file_path:
+                        message['response'] = file_path  # Update message with file path
         except Exception as e:
             with chat_container:
                 st.error(f"⚠️Sorry, Couldn't generate the answer! Please try rephrasing your question! Error: {e}")
-
         st.rerun()
 
 
     st.sidebar.text("Click to Clear Chat history")
     st.sidebar.button("CLEAR 🗑️", on_click=clear_chat_history)
+
+
+
+
 
 

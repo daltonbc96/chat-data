@@ -69,7 +69,7 @@ def main():
                             chat_window(analyst, variables_list=column_names)
                 else:
                     st.warning("Please upload your data first! You can upload CSV or Excel files.")
-            elif data_option == 'Local Folder':
+            elif data_option == 'Loaded Data':
                 st.session_state['data'] = load_data_from_folder("data")
                 if st.session_state['data']:
                     selected_file = st.selectbox("Select a file:", list(st.session_state['data'].keys()))
@@ -97,7 +97,7 @@ def main():
                         with col2:
                             chat_window(analyst, variables_list=column_names)
                 else:
-                    st.warning("No data found in the local folder.")
+                    st.warning("No data found in the Loaded Data.")
 
 if __name__ == "__main__":
     main()
