@@ -8,7 +8,7 @@ import plotly.io as pio
 import pandas as pd
 import numpy as np
 
-from utils.clear_cache import clear_chat_history
+from utils.clear_cache import clear_chat_history, clear_saved_files
 from utils.sanitizer import sanitize_query
 from components.pills import custom_pills
 from components.search_suggestions import show_chat_input_with_suggestions
@@ -182,7 +182,7 @@ def chat_window(analyst, variables_list):
 
 
     st.sidebar.text("Click to Clear Chat history")
-    st.sidebar.button("CLEAR 🗑️", on_click=clear_chat_history)
+    st.sidebar.button("CLEAR 🗑️", on_click=lambda: [clear_chat_history(), clear_saved_files()])
 
 
 

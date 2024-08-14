@@ -4,6 +4,7 @@ from components.chat_window import chat_window
 from components.agent import get_agent
 from components.data import extract_dataframes, load_data_from_folder
 from components.llm import get_LLM
+from utils.clear_cache import  run_once
 
 # Ensure data is stored in session state
 if 'data' not in st.session_state:
@@ -28,6 +29,9 @@ def main():
     </style>
     """
     st.markdown(margins_css, unsafe_allow_html=True)
+
+    # clear files in save files folder
+    run_once()
 
     # Container principal
     with st.container():
