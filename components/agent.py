@@ -1,16 +1,16 @@
-from typing import Optional
+#from typing import Optional
 from pandasai import Agent
 from pandasai.responses.streamlit_response import StreamlitResponse
-from pandasai.skills import skill
+#from pandasai.skills import skill
 
 
 
-import re
-import pandas as pd
-from bertopic import BERTopic
-from umap import UMAP
-from tqdm import tqdm
-from sklearn.feature_extraction.text import TfidfVectorizer
+#import re
+#import pandas as pd
+#from bertopic import BERTopic
+#from umap import UMAP
+#from tqdm import tqdm
+#from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 
