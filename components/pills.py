@@ -1,5 +1,6 @@
 from streamlit_pills import pills
 from typing import Iterable, Union, Callable
+import streamlit as st
 
 def custom_pills(label: str, options: dict, icons: Iterable[str] = None, index: Union[int, None] = 0,
                  format_func: Callable = None, label_visibility: str = "visible", clearable: bool = None,
@@ -27,6 +28,8 @@ def custom_pills(label: str, options: dict, icons: Iterable[str] = None, index: 
 
     # Extraia os textos curtos para mostrar como opções
     short_texts = list(options.keys())
+
+    st.write("Prompt Suggestions")
 
     # Passar os argumentos para a função pills
     selected_short_text = pills(label=label, options=short_texts, icons=icons, index=index, format_func=format_func,

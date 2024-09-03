@@ -1,7 +1,8 @@
 #from typing import Optional
 from pandasai import Agent
 from pandasai.responses.streamlit_response import StreamlitResponse
-#from pandasai.skills import skill
+from pandasai.skills import skill
+import pandas as pd
 
 
 
@@ -23,12 +24,10 @@ def get_agent(data, llm, agent_context):
                           "max_retries": len(data),
                      
                           "response_parser": None,  
-                          "enable_cache": True,
-               
-       
-                       
+                          "enable_cache": True,             
                           "custom_whitelisted_dependencies": ["seaborn", "gensim", "ydata_profiling", "streamlit_ydata_profiling", "plotly", "wordcloud", "string", "bertopic", "umap", "tqdm", "sklearn"]})
     #agent.add_skills(find_topic)
+    #agent.add_skills(plot_line_chart)
     return agent
 
 
@@ -86,3 +85,29 @@ def get_agent(data, llm, agent_context):
 
 
 
+import pandas as pd
+import plotly.express as px
+from pandasai.skills import skill
+
+@skill
+def plot_line_chart(df: pd.DataFrame, x_column: str, y_column: str):
+    """
+    Generate a line plot using the specified columns for the x and y axes specified by the user. 
+    
+    Args:
+        df (pd.DataFrame): The input DataFrame containing the data.
+        x_column (str): The name of the column to be used for the x-axis.
+        y_column (str): The name of the column to be used for the y-axis.
+    """
+    # Handle non-numeric data in x_column
+    if df[x_column].dtype == 'object':
+        df[x_column] = df[x_column].astype('category').cat.codes
+
+    # Handle non-numeric data in y_column
+    if df[y_column].dtype == 'object':
+        df[y_column] = df[y_column].astype('category').cat.codes
+
+    # Plot using Plotly Express
+    fig = px.line(df, x=x_column, y=y_column, title=f'Line Chart of {y_column} vs {x_column}')
+    fig.write_json("temp_plot.json")
+    return "Plot created successfully and saved as temp_plot.json"

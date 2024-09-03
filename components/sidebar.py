@@ -28,7 +28,7 @@ def setup_sidebar():
 
         st.subheader("Model Setup:")
         llm_type = st.selectbox("Please select LLM", [
-            "gpt-4o-mini",
+            "gpt-4o-mini-2024-07-18",
             "gpt-4o",
             "gpt-3.5-turbo",
             "gpt-3.5-turbo-0125",
