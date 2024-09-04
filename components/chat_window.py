@@ -122,10 +122,7 @@ def chat_window(analyst, variables_list):
 
     with user_input_container:
         user_question = st.chat_input("What are you curious about? Type it here ...", key="chat_input")
-        
 
-        # Chama a função para mostrar as sugestões
-        #show_chat_input_with_suggestions(variables_list)
 
         # Chama a função para mostrar as sugestões
         show_chat_input_with_suggestions(variables_list)
