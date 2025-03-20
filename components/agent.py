@@ -25,7 +25,7 @@ def get_agent(data, llm, agent_context):
                      
                           "response_parser": None,  
                           "enable_cache": True,             
-                          "custom_whitelisted_dependencies": ["seaborn", "gensim", "ydata_profiling", "streamlit_ydata_profiling", "plotly", "wordcloud", "string", "bertopic", "umap", "tqdm", "sklearn"]})
+                          "custom_whitelisted_dependencies": ["seaborn", "gensim", "ydata_profiling", "streamlit_ydata_profiling", "plotly", "wordcloud", "string", "bertopic", "umap", "tqdm", "sklearn", "streamlit"]})
     #agent.add_skills(find_topic)
     #agent.add_skills(plot_line_chart)
     return agent
